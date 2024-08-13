@@ -10,13 +10,6 @@ This repository documents my journey through the Learn to Cloud guide. As I prog
 - **Structure:** The repository is organized into different folders, each representing a project or a key section from the guide. Inside each folder, you'll find the project files, detailed documentation, and any relevant resources.
 - **Projects:** Projects will range from basic cloud setup tasks to more complex infrastructure and automation challenges, covering a broad spectrum of cloud technologies and best practices.
 
-## **Project List**
-
-1. **Project Name 1:** Brief description of what this project entails.
-2. **Project Name 2:** Brief description of what this project entails.
-3. **Project Name 3:** Brief description of what this project entails.
-   - *(More projects will be added as I progress through the guide.)*
-
 ## **How to Use This Repository**
 
 - **Explore the Projects:** Feel free to browse through the different project folders to see the work I've completed. Each folder contains a README with a detailed explanation of the project, along with the code and resources used.
