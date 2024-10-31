@@ -23,4 +23,4 @@ To get started visit [LearnToCloud](https://learntocloud.guide/)
 ## **Get in Touch**
 
 If you have any questions, suggestions, or feedback, feel free to reach out! I'm always open to connecting with fellow learners and cloud enthusiasts.
->>>>>>> bac770b84170af7f3f94198d3244665eded6fcab
+
