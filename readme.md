@@ -8,7 +8,7 @@ I will share my experiences on projects or challenges I undertake as part of the
 
 ## Contents
 
-<<<<<<< HEAD
+
 - **README**: Where I document my hands-on projects or challenges I complete during the program.
 
 ## Getting Started
