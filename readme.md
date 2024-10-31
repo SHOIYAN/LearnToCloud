@@ -18,7 +18,7 @@ To get started visit [LearnToCloud](https://learntocloud.guide/)
 ## **How to Use This Repository**
 
 - **Explore the Projects:** Feel free to browse through the different project folders to see the work I've completed. Each folder contains a README with a detailed explanation of the project, along with the code and resources used.
-- **Learning Resources:** Where applicable, I’ve included links to the tutorials, documentation, and other resources that I used to complete each project.
+
 
 ## **Get in Touch**
 
