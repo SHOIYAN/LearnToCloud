@@ -1,27 +1,15 @@
-# **Learn to Cloud Projects**
+# Learn to Cloud Program
 
-**Welcome to my Learn to Cloud Repository!**
+Learn to Cloud is a program (not a book or course) that provide an outline of skills you need to learn Cloud Computing..
 
-This repository documents my journey through the Learn to Cloud guide. As I progress through the guide, I’ll be completing and posting various cloud-related projects, showcasing the skills and concepts I've learned.
+## Overview
 
-## **About This Repository**
+I will share my experiences on projects or challenges I undertake as part of the Learn to Cloud program. The goal is to enhance my skills in cloud computing and related technologies.
 
-- **Purpose:** This repository serves as a portfolio of my cloud computing projects, following the Learn to Cloud guide. Each project is designed to apply and demonstrate specific cloud concepts and skills.
-- **Structure:** The repository is organized into different folders, each representing a project or a key section from the guide. Inside each folder, you'll find the project files, detailed documentation, and any relevant resources.
-- **Projects:** Projects will range from basic cloud setup tasks to more complex infrastructure and automation challenges, covering a broad spectrum of cloud technologies and best practices.
+## Contents
 
-## **Project List**
+- **README**: Where I document my hands-on projects or challenges I complete during the program.
 
-1. **Project Name 1:** Brief description of what this project entails.
-2. **Project Name 2:** Brief description of what this project entails.
-3. **Project Name 3:** Brief description of what this project entails.
-   - *(More projects will be added as I progress through the guide.)*
+## Getting Started
 
-## **How to Use This Repository**
-
-- **Explore the Projects:** Feel free to browse through the different project folders to see the work I've completed. Each folder contains a README with a detailed explanation of the project, along with the code and resources used.
-- **Learning Resources:** Where applicable, I’ve included links to the tutorials, documentation, and other resources that I used to complete each project.
-
-## **Get in Touch**
-
-If you have any questions, suggestions, or feedback, feel free to reach out! I'm always open to connecting with fellow learners and cloud enthusiasts.
+To get started visit [LearnToCloud](https://learntocloud.guide/)
