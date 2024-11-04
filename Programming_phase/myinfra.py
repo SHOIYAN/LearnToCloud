@@ -240,48 +240,257 @@ for data in music_data:
 
 #/////////////////////////////////////////////////////////////////////Lambda////////////////////////////////////////////////////////////////////////
 
-# Create the GetAlbums Lambda Function
 
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('musicdb')
+# Initialize IAM and Lambda clients
+iam_client = boto3.client('iam')
+lambda_client = boto3.client('lambda') 
 
-def lambda_handler(event, context):
-    try:
-        # Scan the DynamoDB table to get all albums
-        response = table.scan()
-        albums = response['Items']
-        
-        return {
-            'statusCode': 200,
-            'body': json.dumps(albums)
+# Define the trust policy that allows Lambda to assume the role
+trust_policy = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "lambda.amazonaws.com"  # AWS Lambda service principal
+            },
+            "Action": "sts:AssumeRole"
         }
-    except ClientError as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e)})
-        }
+    ]
+}
+
+# Create the role with the trust policy
+role_name = "LambdaDynamoDBReadOnlyRole"
+try:
+    role = iam_client.create_role(
+        RoleName=role_name,
+        AssumeRolePolicyDocument=json.dumps(trust_policy),
+        Description="Role for Lambda functions to read from DynamoDB and access S3"
+    )
+    print(f"Created role with name: {role_name}")
+except iam_client.exceptions.EntityAlreadyExistsException:
+    print(f"Role {role_name} already exists.")
+    role = iam_client.get_role(RoleName=role_name)
+
+# Verify and update the trust policy if needed
+iam_client.update_assume_role_policy(
+    RoleName=role_name,
+    PolicyDocument=json.dumps(trust_policy)
+)
+
+# Attach the DynamoDB read-only policy to the role
+iam_client.attach_role_policy(
+    RoleName=role_name,
+    PolicyArn="arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess"
+)
+
+# Attach the S3 full access policy to the role
+iam_client.attach_role_policy(
+    RoleName=role_name,
+    PolicyArn="arn:aws:iam::aws:policy/AmazonS3FullAccess"
+)
+
+# Use the role ARN in your Lambda creation/update code
+role_arn = role['Role']['Arn']
+
+# Create the GetAlbums Lambda function
+response_get_albums = lambda_client.create_function(
+    FunctionName="GetAlbums",
+    Runtime="python3.12",
+    Role=role_arn,
+    Handler="lambda_function.lambda_handler",
+    Code={
+        'S3Bucket': "album-coverz-buck3t",       # Replace with your S3 bucket name
+        'S3Key': "my_lambda_zips/GetAlbums.zip"      # Make sure the path is correct
+    },
+    Description="Lambda function to retrieve albums from DynamoDB",
+    Timeout=10,
+    MemorySize=128
+)
+print("Created GetAlbums function.")
+
+# Create the GetAlbumsByYear Lambda function
+response_get_albums_by_year = lambda_client.create_function(
+    FunctionName="GetAlbumsByYear",
+    Runtime="python3.12",
+    Role=role_arn,
+    Handler="lambda_function.lambda_handler",
+    Code={
+        'S3Bucket': "album-coverz-buck3t",       # Replace with your S3 bucket name
+        'S3Key': "my_lambda_zips/GetAlbumsByYear.zip"  # Ensure the path is correct
+    },
+    Description="Lambda function to retrieve albums by year from DynamoDB",
+    Timeout=10,
+    MemorySize=128
+)
+print("Created GetAlbumsByYear function.")
 
 
-#Create the GetAlbumsByYear Lambda Function
 
-def lambda_handler(event, context):
-    year = event['pathParameters']['year']  # Extract the year from the request
-    try:
-        # Query the DynamoDB table to get albums for the specified year
-        response = table.scan(
-            FilterExpression='releaseYear = :year',
-            ExpressionAttributeValues={
-                ':year': year
-            }
-        )
-        albums = response['Items']
-        
-        return {
-            'statusCode': 200,
-            'body': json.dumps(albums)
+#////////////////////////////////////////////////API_GATEWAY////////////////////////////////////////////////////////////////////////////////////////
+
+
+# Initialize Boto3 clients
+apigateway = boto3.client('apigateway')
+lambda_client = boto3.client('lambda')
+
+# Define your existing Lambda function names
+get_albums_lambda_name = "GetAlbums"
+get_albums_by_year_lambda_name = "GetAlbumsByYear"
+account_id = '730335629339'
+region = 'us-east-1'
+
+# Step 1: Create the API Gateway
+try:
+    api_response = apigateway.create_rest_api(
+        name='AlbumAPI',
+        description='API to retrieve albums from DynamoDB',
+    )
+    api_id = api_response['id']
+    print(f"Created API with ID: {api_id}")
+except botocore.exceptions.ClientError as e:
+    print(f"Error creating API: {e}")
+
+# Step 2: Get the root resource ID
+try:
+    resources = apigateway.get_resources(restApiId=api_id)
+    root_id = resources['items'][0]['id']
+    print(f"Root resource ID: {root_id}")
+except botocore.exceptions.ClientError as e:
+    print(f"Error getting resources: {e}")
+
+# Step 3: Create /getalbums resource
+resource_path_albums = 'getalbums'
+try:
+    resource_response = apigateway.create_resource(
+        restApiId=api_id,
+        parentId=root_id,
+        pathPart=resource_path_albums
+    )
+    resource_id_albums = resource_response['id']
+    print(f"Created resource /{resource_path_albums} with ID: {resource_id_albums}")
+except botocore.exceptions.ClientError as e:
+    print(f"Error creating resource /{resource_path_albums}: {e}")
+
+# Step 4: Create GET method for /getalbums
+try:
+    apigateway.put_method(
+        restApiId=api_id,
+        resourceId=resource_id_albums,
+        httpMethod='GET',
+        authorizationType='NONE'
+    )
+    print(f"Created GET method for /{resource_path_albums}.")
+except botocore.exceptions.ClientError as e:
+    print(f"Error creating GET method for /{resource_path_albums}: {e}")
+
+# Step 5: Integrate GET method with GetAlbums Lambda function
+lambda_function_arn_get = f"arn:aws:lambda:{region}:{account_id}:function:{get_albums_lambda_name}"
+
+try:
+    apigateway.put_integration(
+        restApiId=api_id,
+        resourceId=resource_id_albums,
+        httpMethod='GET',
+        type='AWS_PROXY',
+        integrationHttpMethod='POST',
+        uri=f'arn:aws:apigateway:{region}:lambda:path/2015-03-31/functions/{lambda_function_arn_get}/invocations'
+    )
+    print(f"Linked GET method to {get_albums_lambda_name} Lambda function.")
+except botocore.exceptions.ClientError as e:
+    print(f"Error linking GET method to {get_albums_lambda_name}: {e}")
+
+# Step 6: Add permission for API Gateway to invoke GetAlbums Lambda function
+try:
+    lambda_client.add_permission(
+        FunctionName=get_albums_lambda_name,
+        StatementId='ApiGatewayInvokeGetAlbums',
+        Action='lambda:InvokeFunction',
+        Principal='apigateway.amazonaws.com',
+        SourceArn=f'arn:aws:execute-api:{region}:{account_id}:{api_id}/*/GET/{resource_path_albums}'
+    )
+    print("Added permission for API Gateway to invoke GetAlbums Lambda function.")
+except botocore.exceptions.ClientError as e:
+    print(f"Error adding permission for GetAlbums: {e}")
+
+# Step 7: Create /getalbumsbyyear resource
+resource_path_by_year = 'getalbumsbyyear'
+try:
+    resource_response_by_year = apigateway.create_resource(
+        restApiId=api_id,
+        parentId=root_id,
+        pathPart=resource_path_by_year
+    )
+    resource_id_by_year = resource_response_by_year['id']
+    print(f"Created resource /{resource_path_by_year} with ID: {resource_id_by_year}")
+except botocore.exceptions.ClientError as e:
+    print(f"Error creating resource /{resource_path_by_year}: {e}")
+
+# Step 8: Create {year} as a child resource of /getalbumsbyyear
+try:
+    year_resource_response = apigateway.create_resource(
+        restApiId=api_id,
+        parentId=resource_id_by_year,
+        pathPart='{year}'  # Define {year} as a path parameter
+    )
+    year_resource_id = year_resource_response['id']
+    print(f"Created resource /{resource_path_by_year}/{{year}} with ID: {year_resource_id}")
+except botocore.exceptions.ClientError as e:
+    print(f"Error creating resource /{resource_path_by_year}/{{year}}: {e}")
+
+# Step 9: Create GET method for /getalbumsbyyear/{year}
+try:
+    apigateway.put_method(
+        restApiId=api_id,
+        resourceId=year_resource_id,
+        httpMethod='GET',
+        authorizationType='NONE',
+        requestParameters={
+            'method.request.path.year': True  # Enable the year path parameter
         }
-    except ClientError as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e)})
+    )
+    print(f"Created GET method for /{resource_path_by_year}/{{year}}.")
+except botocore.exceptions.ClientError as e:
+    print(f"Error creating GET method for /{resource_path_by_year}/{{year}}: {e}")
+
+# Step 10: Integrate GET method with GetAlbumsByYear Lambda function
+lambda_function_arn_by_year = f"arn:aws:lambda:{region}:{account_id}:function:{get_albums_by_year_lambda_name}"
+
+try:
+    apigateway.put_integration(
+        restApiId=api_id,
+        resourceId=year_resource_id,
+        httpMethod='GET',
+        type='AWS_PROXY',
+        integrationHttpMethod='POST',
+        uri=f'arn:aws:apigateway:{region}:lambda:path/2015-03-31/functions/{lambda_function_arn_by_year}/invocations',
+        requestParameters={
+            'integration.request.path.year': 'method.request.path.year'
         }
+    )
+    print(f"Linked GET method to {get_albums_by_year_lambda_name} Lambda function.")
+except botocore.exceptions.ClientError as e:
+    print(f"Error linking GET method to {get_albums_by_year_lambda_name}: {e}")
+
+# Step 11: Add permission for API Gateway to invoke GetAlbumsByYear Lambda function
+try:
+    lambda_client.add_permission(
+        FunctionName=get_albums_by_year_lambda_name,
+        StatementId='ApiGatewayInvokeGetAlbumsByYear',
+        Action='lambda:InvokeFunction',
+        Principal='apigateway.amazonaws.com',
+        SourceArn=f'arn:aws:execute-api:{region}:{account_id}:{api_id}/*/GET/{resource_path_by_year}/*'
+    )
+    print("Added permission for API Gateway to invoke GetAlbumsByYear Lambda function.")
+except botocore.exceptions.ClientError as e:
+    print(f"Error adding permission for GetAlbumsByYear: {e}")
+
+# Step 12: Deploy the API
+try:
+    deployment_response = apigateway.create_deployment(
+        restApiId=api_id,
+        stageName='prod'
+    )
+    print("API deployed successfully.")
+except botocore.exceptions.ClientError as e:
+    print(f"Error deploying API: {e}")
