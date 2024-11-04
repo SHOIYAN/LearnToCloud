@@ -1,6 +1,6 @@
 # My Linux Command Line Capture The Flag Journey
 
-Welcome, CTF participants! This guide shows my journey through the seven challenges of the Linux Command Line Capture The Flag program. Each challenge was designed to test different aspects of my Linux skills. Remember, all flags are in the format `CTF{some_text_here}`.
+Welcome! This guide shows my journey through the seven challenges of the Linux Command Line Capture The Flag program. Each challenge was designed to test different aspects of my Linux skills. All flags are in the format `CTF{some_text_here}`.
 
 ## Environment Setup
 
@@ -18,6 +18,7 @@ terraform apply
 
 ![](/assets/Challenge_1-hiddenfile.png)
 
+
 **Objective:** Find a hidden file in the `ctf_challenges` directory and read its contents.
 
 **Skills tested:**
@@ -30,6 +31,7 @@ I used ```ls -la``` to find the hidden file and used ```cat``` command to displa
 
 ## Challenge 2: The Secret File
 ![](/assets/Challenge_2-thesecretfile.png)
+
 **Objective:** Locate a file with the word "secret" in its name anywhere in the /home/ctf_user directory.
 
 **Skills tested:**
