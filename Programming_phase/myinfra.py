@@ -1,6 +1,7 @@
 import os
 import json
 import boto3
+import botocore
 from botocore.exceptions import ClientError
 
 
@@ -337,7 +338,7 @@ lambda_client = boto3.client('lambda')
 # Define your existing Lambda function names
 get_albums_lambda_name = "GetAlbums"
 get_albums_by_year_lambda_name = "GetAlbumsByYear"
-account_id = '730335629339'
+account_id = '...........'
 region = 'us-east-1'
 
 # Step 1: Create the API Gateway
