@@ -1,4 +1,6 @@
-fastapi 
-azure-cosmos 
+boto3
+fastapi
 uvicorn
+pydantic
+starlette
 python-dotenv
